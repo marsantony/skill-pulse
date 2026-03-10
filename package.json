@@ -1,0 +1,17 @@
+{
+  "name": "skill-pulse",
+  "version": "0.1.0",
+  "description": "Track your skill health in the AI era — fight cognitive debt with deliberate practice.",
+  "type": "module",
+  "scripts": {
+    "dev": "npx serve .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "chart.js": "^4.4.8",
+    "jsdom": "^26.0.0",
+    "vitest": "^3.1.0"
+  },
+  "license": "MIT"
+}

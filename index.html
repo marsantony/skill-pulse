@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skill Pulse — 技能脈搏</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-brand">⚡ Skill Pulse</div>
+    <div class="nav-links">
+      <a href="#" data-page="landing" class="nav-link active">首頁</a>
+      <a href="#" data-page="assessment" class="nav-link">技能自評</a>
+      <a href="#" data-page="review" class="nav-link">週回顧</a>
+      <a href="#" data-page="dashboard" class="nav-link">Dashboard</a>
+      <a href="#" data-page="settings" class="nav-link">設定</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <!-- Landing Page -->
+    <section id="page-landing" class="page active">
+      <div class="hero">
+        <h1>你的技能，還健康嗎？</h1>
+        <p class="hero-sub">
+          AI 讓你寫 code 更快，但你對系統的理解正在萎縮。<br>
+          Anthropic 研究顯示，AI 輔助組的技能測驗平均只拿 <strong>50%</strong>，手動組拿 <strong>67%</strong>。<br>
+          差距最大的領域？<strong>Debug 能力。</strong>
+        </p>
+        <p class="hero-desc">
+          Skill Pulse 幫你定期量測技能健康狀態、追蹤 AI 依賴度、<br>
+          把「讓 AI 做了但不懂的事」轉化為學習清單。
+        </p>
+        <div class="hero-actions">
+          <button class="btn btn-primary" data-goto="assessment">開始第一次自評</button>
+          <button class="btn btn-secondary" data-goto="review">寫週回顧</button>
+        </div>
+      </div>
+
+      <div class="method-section">
+        <h2>方法論</h2>
+        <div class="method-cards">
+          <div class="card">
+            <h3>🔍 察覺</h3>
+            <p>定期自評技能等級與 AI 依賴度，誠實面對「用過 ≠ 理解」的差距。</p>
+          </div>
+          <div class="card">
+            <h3>📝 記錄</h3>
+            <p>每週回顧：學了什麼、靠 AI 做了什麼不懂的、哪裡卡住了。</p>
+          </div>
+          <div class="card">
+            <h3>🎯 行動</h3>
+            <p>把 AI 依賴清單轉為學習任務，每週手動練習 1-2 個弱點。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Assessment Page -->
+    <section id="page-assessment" class="page">
+      <h2>技能自評</h2>
+      <p class="page-desc">對每個技能誠實評估：你的理解程度是多少？有多依賴 AI？</p>
+      <form id="assessment-form">
+        <div id="assessment-categories"></div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">儲存自評</button>
+        </div>
+      </form>
+      <div id="assessment-chart-container" class="chart-container" style="display:none">
+        <h3>技能雷達圖</h3>
+        <canvas id="assessment-radar"></canvas>
+      </div>
+      <div id="assessment-history" class="history-section">
+        <h3>歷史紀錄</h3>
+        <div id="assessment-list"></div>
+      </div>
+    </section>
+
+    <!-- Review Page -->
+    <section id="page-review" class="page">
+      <h2>週回顧</h2>
+      <p class="page-desc">每週花 15 分鐘回顧，把認知債轉化為學習動力。</p>
+      <form id="review-form">
+        <div class="form-group">
+          <label for="review-learned">📗 Learned — 這週真正理解了什麼？</label>
+          <textarea id="review-learned" rows="3" placeholder="例：搞懂了 Python decorator 的運作原理"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="review-leaned">🤖 Leaned on AI — 讓 AI 做了什麼你不懂的？</label>
+          <textarea id="review-leaned" rows="3" placeholder="例：讓 AI 寫了 pytest fixtures，但我不確定 fixture scope 怎麼運作"></textarea>
+          <small class="hint">這些會自動成為你的學習清單</small>
+        </div>
+        <div class="form-group">
+          <label for="review-lacked">🚧 Lacked — 哪個時刻卡住或發現不懂？</label>
+          <textarea id="review-lacked" rows="3" placeholder="例：CI 失敗時不知道怎麼看 log"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="review-next">🎯 Next Week — 下週要手動練什麼？</label>
+          <textarea id="review-next" rows="3" placeholder="例：不用 AI，自己手寫 3 個 pytest 測試"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">儲存週回顧</button>
+        </div>
+      </form>
+      <div id="review-history" class="history-section">
+        <h3>歷史紀錄</h3>
+        <div id="review-list"></div>
+      </div>
+    </section>
+
+    <!-- Dashboard Page -->
+    <section id="page-dashboard" class="page">
+      <h2>Dashboard</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-assessments">0</div>
+          <div class="stat-label">次自評</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-reviews">0</div>
+          <div class="stat-label">篇週回顧</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-streak">0</div>
+          <div class="stat-label">週連續</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-avg-level">-</div>
+          <div class="stat-label">平均技能等級</div>
+        </div>
+      </div>
+      <div class="chart-container">
+        <h3>技能等級變化</h3>
+        <canvas id="dashboard-trend"></canvas>
+      </div>
+      <div class="chart-container">
+        <h3>AI 依賴度分佈</h3>
+        <canvas id="dashboard-aidep"></canvas>
+      </div>
+      <div id="learning-queue" class="history-section">
+        <h3>📋 學習清單（來自週回顧）</h3>
+        <div id="learning-list"></div>
+      </div>
+    </section>
+
+    <!-- Settings Page -->
+    <section id="page-settings" class="page">
+      <h2>設定</h2>
+      <div class="settings-group">
+        <h3>資料管理</h3>
+        <div class="settings-actions">
+          <button class="btn btn-secondary" id="btn-export">匯出 JSON</button>
+          <button class="btn btn-secondary" id="btn-import">匯入 JSON</button>
+          <input type="file" id="import-file" accept=".json" style="display:none">
+        </div>
+      </div>
+      <div class="settings-group">
+        <h3>危險區域</h3>
+        <button class="btn btn-danger" id="btn-clear">清除所有資料</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
