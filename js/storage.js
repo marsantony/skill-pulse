@@ -1,4 +1,5 @@
 import { STORAGE_KEYS, DEFAULT_CATEGORIES } from './data.js';
+import { getISOWeek } from './utils.js';
 
 function read(key) {
   try {
@@ -10,7 +11,14 @@ function read(key) {
 }
 
 function write(key, data) {
-  localStorage.setItem(key, JSON.stringify(data));
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (e) {
+    if (e.name === 'QuotaExceededError') {
+      throw new Error('儲存空間已滿，請匯出備份後清除舊資料');
+    }
+    throw e;
+  }
 }
 
 // --- Categories ---
@@ -31,7 +39,6 @@ export function getAssessments() {
 
 export function saveAssessment(assessment) {
   const all = getAssessments();
-  // Each assessment has: { id, date, ratings: { [skillId]: { level, aiDep } } }
   const entry = {
     id: assessment.id ?? crypto.randomUUID(),
     date: assessment.date ?? new Date().toISOString(),
@@ -97,15 +104,4 @@ export function importAll(data) {
 
 export function clearAll() {
   Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
-}
-
-// --- Helpers ---
-
-function getISOWeek(date) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
-  const yearStart = new Date(d.getFullYear(), 0, 4);
-  const weekNum = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
-  return `${d.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
 }

@@ -1,4 +1,5 @@
 import { getReviews, saveReview, deleteReview } from './storage.js';
+import { formatDate, escapeHtml } from './utils.js';
 import { showToast } from './app.js';
 
 export function initReview() {
@@ -7,6 +8,16 @@ export function initReview() {
   document.getElementById('review-form').addEventListener('submit', (e) => {
     e.preventDefault();
     handleSubmit();
+  });
+
+  // Event delegation for history actions
+  document.getElementById('review-list').addEventListener('click', (e) => {
+    const deleteBtn = e.target.closest('[data-delete-review]');
+    if (deleteBtn) {
+      deleteReview(deleteBtn.dataset.deleteReview);
+      renderHistory();
+      showToast('已刪除');
+    }
   });
 }
 
@@ -23,8 +34,6 @@ function handleSubmit() {
 
   saveReview({ learned, leanedOnAI, lacked, nextWeek });
   showToast('週回顧已儲存！');
-
-  // Reset form
   document.getElementById('review-form').reset();
   renderHistory();
 }
@@ -54,14 +63,6 @@ function renderHistory() {
   `
     )
     .join('');
-
-  list.querySelectorAll('[data-delete-review]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      deleteReview(btn.dataset.deleteReview);
-      renderHistory();
-      showToast('已刪除');
-    });
-  });
 }
 
 function field(label, value) {
@@ -72,15 +73,4 @@ function field(label, value) {
       <p>${escapeHtml(value)}</p>
     </div>
   `;
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-function formatDate(iso) {
-  const d = new Date(iso);
-  return d.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
 }

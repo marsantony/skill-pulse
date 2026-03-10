@@ -1,5 +1,6 @@
 import { SKILL_LEVELS, AI_DEPENDENCY } from './data.js';
 import { getCategories, getAssessments, saveAssessment, deleteAssessment } from './storage.js';
+import { formatDate, buildSkillNameMap } from './utils.js';
 import { showToast } from './app.js';
 
 let radarChart = null;
@@ -11,6 +12,23 @@ export function initAssessment() {
   document.getElementById('assessment-form').addEventListener('submit', (e) => {
     e.preventDefault();
     handleSubmit();
+  });
+
+  // Event delegation for history actions
+  document.getElementById('assessment-list').addEventListener('click', (e) => {
+    const deleteBtn = e.target.closest('[data-delete-assessment]');
+    if (deleteBtn) {
+      deleteAssessment(deleteBtn.dataset.deleteAssessment);
+      renderHistory();
+      showToast('已刪除');
+      return;
+    }
+    const viewBtn = e.target.closest('[data-view-assessment]');
+    if (viewBtn) {
+      const assessments = getAssessments();
+      const a = assessments.find((x) => x.id === viewBtn.dataset.viewAssessment);
+      if (a) renderRadar(a.ratings);
+    }
   });
 }
 
@@ -47,7 +65,11 @@ function renderForm() {
 
 function handleSubmit() {
   const levelSelects = document.querySelectorAll('.level-select');
-  const aidepSelects = document.querySelectorAll('.aidep-select');
+  const aidepMap = new Map();
+  document.querySelectorAll('.aidep-select').forEach((sel) => {
+    aidepMap.set(sel.dataset.skill, sel.value);
+  });
+
   const ratings = {};
   let hasAny = false;
 
@@ -56,10 +78,9 @@ function handleSubmit() {
     const level = parseInt(sel.value, 10);
     if (!level) return;
     hasAny = true;
-    const aidepSel = [...aidepSelects].find((s) => s.dataset.skill === skillId);
     ratings[skillId] = {
       level,
-      aiDep: aidepSel?.value || 'medium',
+      aiDep: aidepMap.get(skillId) || 'medium',
     };
   });
 
@@ -71,9 +92,7 @@ function handleSubmit() {
   saveAssessment({ ratings });
   showToast('自評已儲存！');
 
-  // Reset form
   levelSelects.forEach((s) => (s.value = ''));
-
   renderHistory();
   renderRadar(ratings);
 }
@@ -82,12 +101,10 @@ function renderRadar(ratings) {
   const container = document.getElementById('assessment-chart-container');
   container.style.display = 'block';
   const canvas = document.getElementById('assessment-radar');
+  const skillNameMap = buildSkillNameMap();
 
   const labels = [];
   const values = [];
-  const categories = getCategories();
-  const skillNameMap = {};
-  categories.forEach((cat) => cat.skills.forEach((s) => (skillNameMap[s.id] = s.name)));
 
   for (const [skillId, data] of Object.entries(ratings)) {
     labels.push(skillNameMap[skillId] || skillId);
@@ -139,9 +156,7 @@ function renderRadar(ratings) {
 function renderHistory() {
   const list = document.getElementById('assessment-list');
   const assessments = getAssessments().slice().reverse();
-  const categories = getCategories();
-  const skillNameMap = {};
-  categories.forEach((cat) => cat.skills.forEach((s) => (skillNameMap[s.id] = s.name)));
+  const skillNameMap = buildSkillNameMap();
 
   if (!assessments.length) {
     list.innerHTML = '<div class="empty-state">還沒有自評紀錄</div>';
@@ -172,24 +187,4 @@ function renderHistory() {
     `;
     })
     .join('');
-
-  list.querySelectorAll('[data-delete-assessment]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      deleteAssessment(btn.dataset.deleteAssessment);
-      renderHistory();
-      showToast('已刪除');
-    });
-  });
-
-  list.querySelectorAll('[data-view-assessment]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const a = assessments.find((x) => x.id === btn.dataset.viewAssessment);
-      if (a) renderRadar(a.ratings);
-    });
-  });
-}
-
-function formatDate(iso) {
-  const d = new Date(iso);
-  return d.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
 }

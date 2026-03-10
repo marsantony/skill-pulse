@@ -1,19 +1,21 @@
-import { getAssessments, getReviews, getCategories } from './storage.js';
+import { getAssessments, getReviews } from './storage.js';
+import { formatDate, escapeHtml, getISOWeek, buildSkillNameMap } from './utils.js';
 
 let trendChart = null;
 let aidepChart = null;
 
 export function initDashboard() {
-  renderStats();
-  renderTrend();
-  renderAiDep();
-  renderLearningQueue();
-}
-
-function renderStats() {
+  // Read data once, pass to all renderers
   const assessments = getAssessments();
   const reviews = getReviews();
 
+  renderStats(assessments, reviews);
+  renderTrend(assessments);
+  renderAiDep(assessments);
+  renderLearningQueue(reviews);
+}
+
+function renderStats(assessments, reviews) {
   document.getElementById('stat-assessments').textContent = assessments.length;
   document.getElementById('stat-reviews').textContent = reviews.length;
   document.getElementById('stat-streak').textContent = calcStreak(reviews);
@@ -32,15 +34,13 @@ function calcStreak(reviews) {
   if (!reviews.length) return 0;
   const weeks = [...new Set(reviews.map((r) => r.week))].sort().reverse();
   let streak = 0;
-  const now = new Date();
-  let checkWeek = getISOWeek(now);
+  let checkWeek = getISOWeek(new Date());
 
   for (const week of weeks) {
     if (week === checkWeek) {
       streak++;
       checkWeek = prevWeek(checkWeek);
     } else if (week === prevWeek(checkWeek)) {
-      // Allow current week to be missing (it's not over yet)
       checkWeek = week;
       streak++;
       checkWeek = prevWeek(checkWeek);
@@ -51,9 +51,8 @@ function calcStreak(reviews) {
   return streak;
 }
 
-function renderTrend() {
+function renderTrend(assessments) {
   const canvas = document.getElementById('dashboard-trend');
-  const assessments = getAssessments();
 
   if (assessments.length < 1) {
     canvas.parentElement.style.display = 'none';
@@ -61,13 +60,9 @@ function renderTrend() {
   }
   canvas.parentElement.style.display = 'block';
 
-  const categories = getCategories();
-  const skillNameMap = {};
-  categories.forEach((cat) => cat.skills.forEach((s) => (skillNameMap[s.id] = s.name)));
-
-  // Collect all skill IDs across all assessments
+  const skillNameMap = buildSkillNameMap();
   const allSkillIds = [...new Set(assessments.flatMap((a) => Object.keys(a.ratings)))];
-  const labels = assessments.map((a) => formatDate(a.date));
+  const labels = assessments.map((a) => formatDate(a.date, false));
 
   const colors = [
     '#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#06b6d4',
@@ -104,9 +99,8 @@ function renderTrend() {
   });
 }
 
-function renderAiDep() {
+function renderAiDep(assessments) {
   const canvas = document.getElementById('dashboard-aidep');
-  const assessments = getAssessments();
 
   if (!assessments.length) {
     canvas.parentElement.style.display = 'none';
@@ -139,10 +133,9 @@ function renderAiDep() {
   });
 }
 
-function renderLearningQueue() {
+function renderLearningQueue(reviews) {
   const list = document.getElementById('learning-list');
-  const reviews = getReviews().slice().reverse();
-  const items = reviews.filter((r) => r.leanedOnAI).slice(0, 10);
+  const items = reviews.slice().reverse().filter((r) => r.leanedOnAI).slice(0, 10);
 
   if (!items.length) {
     list.innerHTML = '<div class="empty-state">寫週回顧時填寫「Leaned on AI」欄位，這裡會自動產生學習清單</div>';
@@ -163,29 +156,8 @@ function renderLearningQueue() {
     .join('');
 }
 
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-function formatDate(iso) {
-  const d = new Date(iso);
-  return d.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' });
-}
-
-function getISOWeek(date) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
-  const yearStart = new Date(d.getFullYear(), 0, 4);
-  const weekNum = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
-  return `${d.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
-}
-
 function prevWeek(weekStr) {
   const [y, w] = weekStr.split('-W').map(Number);
   if (w > 1) return `${y}-W${String(w - 1).padStart(2, '0')}`;
-  // Approximate: last week of previous year
   return `${y - 1}-W52`;
 }
